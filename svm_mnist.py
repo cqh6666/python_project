@@ -3,9 +3,10 @@ import torchvision
 import matplotlib.pyplot as plt
 import matplotlib
 from sklearn import svm
+from sklearn.model_selection import train_test_split
 from sklearn.datasets import load_digits
 from sklearn.datasets import fetch_openml
-
+import joblib
 
 # 通过openml 读取 mnist数据集，较慢...
 # mnist = fetch_openml('mnist_784', version=1, cache=True)
@@ -21,9 +22,34 @@ from sklearn.datasets import fetch_openml
 
 # 用sklearn自带的数据集 load_digits
 digits = load_digits()
-print(digits.data.shape)
-plt.matshow(digits.images[0])
+data = digits['data']
+target = digits['target']
+target = target.reshape(-1, 1)
+
+
+# print(dir(digits))
+
+predictor = svm.SVC(gamma='scale', C=1.0,
+                    decision_function_shape='ovr', kernel='rbf')
+predictor.fit(data[100:], target[100:])
+joblib.dump(predictor, 'svm.pkl')
+predictor = joblib.load('./svm.pkl')
+
+
+result = predictor.predict(digits.data[0:25])
+
+for i in range(1,26):
+    plt.subplot(5,5,i)
+    plt.imshow(digits.images[i-1], cmap=plt.cm.gray_r, interpolation='nearest')
 plt.show()
+
+print("实际值",digits.target[0:25])
+print("预测值",result)
+print("模型得分",predictor.score(data, target))
+
+
+
+
 
 
 def load_data():
