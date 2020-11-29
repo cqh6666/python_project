@@ -76,6 +76,41 @@ def prim_com_analy(points, n_components):
     return lowDDataMat
 
 
+def get_distance_matrix(data):
+    expand_ = data[:, np.newaxis, :]
+    repeat1 = np.repeat(expand_, data.shape[0], axis=1)
+    repeat2 = np.swapaxes(repeat1, 0, 1)
+    D = np.linalg.norm(repeat1 - repeat2, ord=2, axis=-1, keepdims=True).squeeze(-1)
+    return D
+
+
+def get_matrix_B(D):
+    """计算矩阵B"""
+    assert D.shape[0] == D.shape[1]
+    DD = np.square(D)
+    sum_ = np.sum(DD, axis=1) / D.shape[0]
+    Di = np.repeat(sum_[:, np.newaxis], D.shape[0], axis=1)
+    Dj = np.repeat(sum_[np.newaxis, :], D.shape[0], axis=0)
+    Dij = np.sum(DD) / ((D.shape[0]) ** 2) * np.ones([D.shape[0], D.shape[0]])
+    B = (Di + Dj - DD - Dij) / 2
+    return B
+
+
+def mult_dim_scaling(data, n=2):
+    D = get_distance_matrix(data)
+    B = get_matrix_B(D)
+    B_value, B_vector = np.linalg.eigh(B)
+    Be_sort = np.argsort(-B_value)
+    B_value = B_value[Be_sort]  # 降序排列的特征值
+    B_vector = B_vector[:, Be_sort]  # 降序排列的特征值对应的特征向量
+    Bez = np.diag(B_value[0:n])
+    Bvz = B_vector[:, 0:n]
+    Z = np.dot(np.sqrt(Bez), Bvz.T).T
+    return Z
+
+
+
+
 def load_xyz(file):
     xx = []
     yy = []
@@ -114,18 +149,19 @@ def dim_reduct_plot(file):
     points = mesh.points
 
     lowDDataMat = prim_com_analy(points, 2)
-    lowData = np.array(lowDDataMat)
+    pca_data = np.array(lowDDataMat)
 
+    mds_data = mult_dim_scaling(points, 2)
     # pca = PCA(n_components=2)
     # X_pca = pca.fit_transform(points)
 
-    mds = MDS(n_components=2)
-    X_mds = mds.fit_transform(points)
+    # mds = MDS(n_components=2)
+    # X_mds = mds.fit_transform(points)
 
     plt.subplot(121)
-    plt.scatter(lowData[:, 0], lowData[:, 1], marker='o')
+    plt.scatter(pca_data[:, 0], pca_data[:, 1], marker='o')
     plt.subplot(122)
-    plt.scatter(X_mds[:, 0], X_mds[:, 1], marker='o')
+    plt.scatter(mds_data[:, 0], mds_data[:, 1], marker='o')
     plt.show()
 
 
@@ -139,4 +175,6 @@ def draw_o3d(file):
     o3d.visualization.draw_geometries([pcd], width=1000, height=1008)
 
 
-dim_reduct_plot(OBJ_file)
+if __name__ == '__main__':
+    dim_reduct_plot(OBJ_file)
+    print("1")
