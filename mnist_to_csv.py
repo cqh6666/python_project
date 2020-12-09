@@ -2,11 +2,11 @@ import struct
 
 
 def to_csv(name, maxdata):
-    lbl_f = open("./dataset_mnist/MNIST/raw/" + name + "-labels-idx1-ubyte", "rb")
+    lbl_f = open("./dataset/MNIST/raw/" + name + "-labels-idx1-ubyte", "rb")
     # 打开标签数据集
-    img_f = open("./dataset_mnist/MNIST/raw/" + name + "-images-idx3-ubyte", "rb")
+    img_f = open("./dataset/MNIST/raw/" + name + "-images-idx3-ubyte", "rb")
     # 打开图像数据集
-    csv_f = open("./dataset_mnist/MNIST/" + name + ",csv", "w", encoding="utf-8")
+    csv_f = open("./dataset/MNIST/" + name + ",csv", "w", encoding="utf-8")
     # 写入CSV文件
 
     mag, lbl_count = struct.unpack(">II", lbl_f.read(8))

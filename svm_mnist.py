@@ -54,11 +54,11 @@ print("模型得分",predictor.score(data, target))
 
 def load_data():
     """transform to torch"""
-    dataset_train = torchvision.datasets.MNIST(root='./dataset_mnist',
+    dataset_train = torchvision.datasets.MNIST(root='./dataset',
                                                train=True,
                                                transform=torchvision.transforms.ToTensor(),
                                                download=True)
-    dataset_test = torchvision.datasets.MNIST(root='./dataset_mnist',
+    dataset_test = torchvision.datasets.MNIST(root='./dataset',
                                               train=False,
                                               transform=torchvision.transforms.ToTensor(),
                                               download=True)

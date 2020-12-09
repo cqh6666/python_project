@@ -3,8 +3,10 @@ from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 from sklearn.decomposition import PCA
 from sklearn.manifold import MDS
-import open3d as o3d
+from sklearn.manifold import LocallyLinearEmbedding as LLE
+from sklearn.manifold import Isomap as ISOMap
 
+import open3d as o3d
 import meshio  # 读取三维mesh的库
 
 OBJ_file = 'matteonormb.obj'
@@ -73,7 +75,7 @@ def prim_com_analy(points, n_components):
     eigVals, eigVects = lin_eig(con_matrix=covMat)
     # 选取最大的d_l个特征值对应的特征向量,lowDDataMat 降维的矩阵，reconMat 降维且经过变换的投影矩阵
     lowDDataMat = select_eig(points, eigVals, eigVects, n_components)
-    return lowDDataMat
+    return np.array(lowDDataMat)
 
 
 def get_distance_matrix(data):
@@ -148,20 +150,28 @@ def dim_reduct_plot(file):
     mesh = meshio.read(file)
     points = mesh.points
 
-    lowDDataMat = prim_com_analy(points, 2)
-    pca_data = np.array(lowDDataMat)
-
-    mds_data = mult_dim_scaling(points, 2)
+    pca_data = prim_com_analy(points, 2)
     # pca = PCA(n_components=2)
     # X_pca = pca.fit_transform(points)
-
+    mds_data = mult_dim_scaling(points, 2)
     # mds = MDS(n_components=2)
     # X_mds = mds.fit_transform(points)
+    lle_data = LLE(n_components=2, n_neighbors=8).fit_transform(points)
+    iso_data = ISOMap(n_components=2, n_neighbors=10).fit_transform(points)
 
-    plt.subplot(121)
-    plt.scatter(pca_data[:, 0], pca_data[:, 1], marker='o')
-    plt.subplot(122)
-    plt.scatter(mds_data[:, 0], mds_data[:, 1], marker='o')
+    plt.subplot(221)
+    plt.title('PCA')
+    plt.scatter(pca_data[:, 0], pca_data[:, 1],c='blue',marker='.')
+    plt.subplot(222)
+    plt.title('MDS')
+    plt.scatter(mds_data[:, 0], mds_data[:, 1],c='red',marker='.')
+    plt.subplot(223)
+    plt.title('LLE')
+    plt.scatter(lle_data[:, 0], lle_data[:, 1],c='yellow',marker='.')
+    plt.subplot(224)
+    plt.title('ISOMAP')
+    plt.scatter(iso_data[:, 0], iso_data[:, 1], c='green',marker='.')
+
     plt.show()
 
 
@@ -177,4 +187,4 @@ def draw_o3d(file):
 
 if __name__ == '__main__':
     dim_reduct_plot(OBJ_file)
-    print("1")
+    print("end!")
