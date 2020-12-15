@@ -77,17 +77,29 @@ def prim_com_analy(points, n_components):
 
 
 def get_distance_matrix(data):
+    """
+    求距离矩阵
+    :param data: n x m 矩阵数据
+    :return: Distance 各结点之间的距离矩阵
+    """
+    # 将矩阵 [n , m ] 拓展为 [n , 1 , m ]
     expand_ = data[:, np.newaxis, :]
+    # 将拓展的矩阵进行延申使得 n个[n,m] 即 [n,n,m]
     repeat1 = np.repeat(expand_, data.shape[0], axis=1)
     repeat2 = np.swapaxes(repeat1, 0, 1)
-    D = np.linalg.norm(repeat1 - repeat2, ord=2, axis=-1, keepdims=True).squeeze(-1)
-    return D
+    # 求2范数
+    D_pre = np.linalg.norm(repeat1 - repeat2, ord=2, axis=-1, keepdims=True)
+    D_new = D_pre.squeeze(-1)
+    return D_new
 
 
 def get_matrix_B(D):
-    """计算矩阵B"""
+    """计算内积矩阵B"""
+    # 计算之前得先断言为nxn矩阵
     assert D.shape[0] == D.shape[1]
+    # 计算 dist_ij^2
     DD = np.square(D)
+    # 计算行和
     sum_ = np.sum(DD, axis=1) / D.shape[0]
     Di = np.repeat(sum_[:, np.newaxis], D.shape[0], axis=1)
     Dj = np.repeat(sum_[np.newaxis, :], D.shape[0], axis=0)
@@ -99,16 +111,76 @@ def get_matrix_B(D):
 def mult_dim_scaling(data, n=2):
     D = get_distance_matrix(data)
     B = get_matrix_B(D)
+    # 计算特征值、特征向量
     B_value, B_vector = np.linalg.eigh(B)
+    # 对特征向量进行降序
     Be_sort = np.argsort(-B_value)
-    B_value = B_value[Be_sort]  # 降序排列的特征值
-    B_vector = B_vector[:, Be_sort]  # 降序排列的特征值对应的特征向量
+    # 降序排列的特征值
+    B_value = B_value[Be_sort]
+    # 降序排列的特征值对应的特征向量
+    B_vector = B_vector[:, Be_sort]
+    # 对角矩阵 - 特征值
     Bez = np.diag(B_value[0:n])
+    # 选取后的特征向量
     Bvz = B_vector[:, 0:n]
     Z = np.dot(np.sqrt(Bez), Bvz.T).T
     return Z
 
 
+class local_linear_embedding():
+    def __init__(self, data, k_neigh, dim):
+        self.data = data
+        self.k_neigh = k_neigh
+        self.dim = dim
+
+    def fit_trans(self):
+        """
+        1. 对数据进行矩阵化（传入的参数一开始就是矩阵)
+        2. for 1...m: 找到xi 的 k个近邻点,求 w_ij
+        这时候得到一个W矩阵
+        3. 求M矩阵：M = (I-W)(I-W)^T
+        4。 求特征值
+        5. 选d个特征向量，组成的就是低维的数据
+        :return:
+        """
+        K_matrix = self.get_k_neighbors() # 得到近邻矩阵
+        z_conv = np.cov(K_matrix, rowvar=0)
+
+    def get_distance_matrix(self):
+        """
+        求距离矩阵
+        :param data: n x m 矩阵数据
+        :return: Distance 各结点之间的距离矩阵
+        """
+        data = self.data
+        # 将矩阵 [n , m ] 拓展为 [n , 1 , m ]
+        expand_ = data[:, np.newaxis, :]
+        # 将拓展的矩阵进行延申使得 n个[n,m] 即 [n,n,m]
+        repeat1 = np.repeat(expand_, data.shape[0], axis=1)
+        repeat2 = np.swapaxes(repeat1, 0, 1)
+        # 求2范数
+        D_pre = np.linalg.norm(repeat1 - repeat2, ord=2, axis=-1, keepdims=True)
+        D_new = D_pre.squeeze(-1)
+        return D_new
+
+    def get_k_neighbors(self):
+        """
+        找k近邻
+        :param n_neigh:
+        :return: nxk的近邻矩阵 其余部分为0
+        """
+        k_neigh = self.k_neigh
+        # 距离矩阵
+        D_matrix = self.get_distance_matrix()
+        # 定义一个矩阵，存储近邻点序号
+        n = D_matrix.shape[0]
+        K_matrix = np.zeros((n, k_neigh))  # nxd
+        # 遍历每一个点
+        for i in range(n):
+            index_ = np.argsort(D_matrix[i])
+            K_matrix[i] = index_[1:k_neigh + 1]
+
+        return K_matrix
 
 
 def load_xyz(file):
@@ -175,6 +247,10 @@ def draw_o3d(file):
     o3d.visualization.draw_geometries([pcd], width=1000, height=1008)
 
 
+
 if __name__ == '__main__':
-    dim_reduct_plot(OBJ_file)
-    print("1")
+    # dim_reduct_plot(OBJ_file)
+    mesh = meshio.read(OBJ_file)
+    points = mesh.points
+    arrays = LLe = LLE(points,5,2)
+    print(arrays)
