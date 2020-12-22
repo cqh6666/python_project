@@ -111,13 +111,13 @@ def EM(data, labels):
 def main():
     data_type = np.dtype("int32").newbyteorder('>')
 
-    data = np.fromfile("./dataset_mnist/MNIST/raw/train-images-idx3-ubyte", dtype="ubyte")
+    data = np.fromfile("../dataset/MNIST/raw/train-images-idx3-ubyte", dtype="ubyte")
     magic_number, number_of_images, number_of_rows, number_of_columns = np.frombuffer(data[:4 * data_type.itemsize],
                                                                                       data_type)
 
     data = data[4 * data_type.itemsize:].astype("int").reshape([number_of_images, number_of_rows * number_of_columns])
 
-    labels = np.fromfile("./dataset_mnist/MNIST/raw/train-labels-idx1-ubyte", dtype="ubyte").astype("int")
+    labels = np.fromfile("../dataset/MNIST/raw/train-labels-idx1-ubyte", dtype="ubyte").astype("int")
     labels = labels[2 * data_type.itemsize:]
 
     one = np.ones(28)

@@ -33,7 +33,7 @@ predictor = svm.SVC(gamma='scale', C=1.0,
                     decision_function_shape='ovr', kernel='rbf')
 predictor.fit(data[100:], target[100:])
 joblib.dump(predictor, 'svm.pkl')
-predictor = joblib.load('./svm.pkl')
+predictor = joblib.load('svm.pkl')
 
 
 result = predictor.predict(digits.data[0:25])
