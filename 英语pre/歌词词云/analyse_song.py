@@ -7,14 +7,14 @@ from PIL import Image
 
 # https://blog.csdn.net/fly910905/article/details/77763086/
 
-songs_path = '../英语pre/歌词更新/'
-other_path = '../英语pre/other'
+songs_path = '../歌词更新/'
+other_path = '../result'
 
 def get_all_songs(path):
     files = os.listdir(path)
 
     for file in files:
-        with open("../英语pre/other/songs2.txt", 'a', encoding='utf-8') as fn, open(os.path.join(path, file), 'r', encoding='utf-8') as f2:
+        with open("../result/songs2.txt", 'a', encoding='utf-8') as fn, open(os.path.join(path, file), 'r', encoding='utf-8') as f2:
             for line in f2:
                 fn.write(line)
         print(file,"插入成功")

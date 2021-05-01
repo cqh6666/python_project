@@ -8,8 +8,8 @@ urls = "https://music.163.com/artist?id=3684"
 headers = {
     "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.111 Safari/537.36 Edg/86.0.622.56"
 }
-PATH = "../英语pre"
-NEW_PATH = "../英语pre/歌词更新"
+PATH = ".."
+NEW_PATH = "../歌词更新"
 def request_songs(urls):
     s = requests.session()
     bs = BeautifulSoup(s.get(urls, headers=headers).content, "lxml")
