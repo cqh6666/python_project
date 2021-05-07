@@ -14,7 +14,7 @@ __author__ = 'cqh'
 
 from PIL import Image
 import os
-img_path = "./pictures"
+img_path = "pictures"
 
 
 def image_crop_for_wallpaper():
