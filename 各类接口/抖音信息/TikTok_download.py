@@ -17,8 +17,6 @@ import os
 from urllib import parse
 
 base_headers = {
-    'cookie': 'MONITOR_WEB_ID=87378296-c50a-487e-bff8-e3aecbf7af1a; _tea_utm_cache_1243={'
-              '%22utm_source%22:%22copy%22%2C%22utm_medium%22:%22android%22%2C%22utm_campaign%22:%22client_share%22}',
     'referer': 'https://www.iesdouyin.com/share/user/50904259373?did'
                '=MS4wLjABAAAARClYU7g5kQpsKl_FGkbX_H4RqhOI3tEocOouVMdV64AbFn8JbB4e4owdO2fMi0MG&iid'
                '=MS4wLjABAAAAg1jAdyi3XsD26Z6Jcr0TwFLdlILvnCfyovnc_k8-DYs&with_sec_did=1&u_code=jb3bb1ji&sec_uid'
@@ -81,7 +79,7 @@ class TikTok():
     def __init__(self, headers=base_headers):
         self.headers = headers
 
-    def get_url_msg(self, dy_url, subject="user", mode='post', count=50):
+    def get_url_msg(self, dy_url, subject="user",count=50):
         """
         url有两种，一种是用户url，一种是视频url
         :param count:
@@ -94,7 +92,6 @@ class TikTok():
         res_url = requests.get(dy_url).url
         # 返回url的所有参数
         params = parse.parse_qs(parse.urlparse(res_url).query)
-        print('params',params.keys())
         # 官方api
         api_post_url = ""
         if subject == "user":
@@ -102,8 +99,8 @@ class TikTok():
             api_post_url = "https://www.iesdouyin.com/web/api/v2/user/info/?sec_uid={}".format(sec_uid)
         elif subject == "all_video":
             sec_uid = params['sec_uid'][0]
-            api_post_url = 'https://www.iesdouyin.com/web/api/v2/aweme/%s/?sec_uid=%s&count=%s&max_cursor=0&aid=1128&_signature=7GuRDgAAjOgEsbNzyyuYwuxrkR&dytk=' % (
-                mode, sec_uid, str(count))
+            api_post_url = 'https://www.iesdouyin.com/web/api/v2/aweme/post/?sec_uid=%s&count=%s&max_cursor=0&aid=1128&_signature=7GuRDgAAjOgEsbNzyyuYwuxrkR&dytk=' % (
+                sec_uid, str(count))
         elif subject == "video":
             video_id = re.findall('video/(\d+)/', res_url)[0]
             api_post_url = "https://www.iesdouyin.com/web/api/v2/aweme/iteminfo/?item_ids={}".format(video_id)
@@ -113,17 +110,15 @@ class TikTok():
         res_msg = []
         # 访问成功
         if res_post.status_code == 200:
-            print("成功获得该用户的所有信息！")
+            print("成功通过api获得该用户的所有信息！")
             res_html = json.loads(res_post.content.decode('utf-8'))
-            print(res_html)
             # 返回的所有信息
             if subject == "user":
                 res_msg.append(res_html['user_info'])
             elif subject == "all_video":
                 res_msg = res_html['aweme_list']
             elif subject == "video":
-                print(res_html)
-                res_msg = res_html['item_list']
+                res_msg.append(res_html)
         else:
             print('查不到此链接的信息！')
 
@@ -197,22 +192,27 @@ class TikTok():
         :param dy_url:
         :return:
         """
-        res_msg = self.get_url_msg(dy_url, subject="video")[0]
+        res_html = self.get_url_msg(dy_url, subject="video")[0]
+        if res_html.get('status_code') != 0:
+            print("status_code错误,获取视频信息失败！！！")
+            return None
+        res_msg = res_html.get('item_list')[0]
+
         video_info = {}
         try:
-            video_info['author_user_id'] = res_msg['author_user_id']
-            video_info['aweme_id'] = res_msg['aweme_id']
-            video_info['desc'] = res_msg['desc']
-            video_info['create_time'] = res_msg['create_time']
-            video_info['author_name'] = res_msg['author']['nickname']
+            video_info['author_user_id'] = res_msg.get('author_user_id')
+            video_info['aweme_id'] = res_msg.get('aweme_id')
+            video_info['desc'] = res_msg.get('desc')
+            video_info['create_time'] = res_msg.get('create_time')
+            video_info['author_name'] = res_msg['author'].get('nickname')
             video_statistics = {
-                'comment_count': res_msg['statistics']['comment_count'],
-                'digg_count': res_msg['statistics']['digg_count'],
-                'share_count': res_msg['statistics']['share_count'],
+                'comment_count': res_msg['statistics'].get('comment_count'),
+                'digg_count': res_msg['statistics'].get('digg_count'),
+                'share_count': res_msg['statistics'].get('share_count'),
             }
 
             video_music = {
-                'music_id': res_msg['music']['id'],
+                'music_id': res_msg['music'].get('id'),
                 'music_url': res_msg['music']['play_url']['url_list'][0],
                 'music_title': res_msg['music']['title']
             }
@@ -274,6 +274,9 @@ class TikTok():
         """
 
         video_info = self.get_one_video_info(dy_url)
+        if video_info is None:
+            return False
+
         author_name = video_info['author_name']
         desc = video_info['desc']
         try:
@@ -309,6 +312,8 @@ class TikTok():
         except:
             print("下载 {} 的视频失败!!!".format(author_name))
 
+        return True
+
 
 one_video_url = 'https://v.douyin.com/eShjkxS/'  # 单个视频
 
@@ -319,32 +324,9 @@ def save_json(tiktok, video_url):
     save_info_json(user_list, video_list)
 
 
-def test():
-    api_post_url = 'https://jokeai.zongcaihao.com/douyin/v292/comment/list?aweme_id=6947627831081864482&cursor=0'
-    res_post = requests.get(url=api_post_url, headers=base_headers)
-    res_html = json.loads(res_post.content.decode('utf-8'))
-    return res_html
-
-
 if __name__ == "__main__":
-    strings = "https://v.douyin.com/eSkhPvm/ ,https://v.douyin.com/eSkhL1o/, https://v.douyin.com/eSkaDe4/"
-    all_video_url = get_url_list(strings)[0]
-    postParams = {
-        "user_id": '59189910855',
-        'count': '21',
-        'max_cursor': '1',
-        'min_cursor': '0',
-        'aid': '1128'
-
-    }
-    res = requests.get("https://aweme.snssdk.com/aweme/v1/aweme/favorite/?", params=postParams,  headers=base_headers)
-
-    print(res.content)
-    # tk = TikTok()
-    # msg = tk.get_url_msg(dy_url=all_video_url[0], subject="all_video", mode="like")
-    # print(msg)
-    # for video_url in all_video_url:
-    #     tk = TikTok()
-    #     save_json(tk, video_url)
-    #     tk.download_all_video(video_url)
-    # print(test())
+    strings = "https://v.douyin.com/eShjkxS/,  https://v.douyin.com/e8Emsu3/"
+    all_video_url = get_url_list(strings)
+    tk = TikTok()
+    msg = tk.download_one_video(dy_url=test_url)
+    print(msg)
