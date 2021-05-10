@@ -70,11 +70,13 @@ class BilateralFilter:
 
 
 
-    def test(self):
-        return self.input.shape
+    def test(self, img):
+        blur = cv2.bilateralFilter(img, 30, 150, 150)
+        cv2.imshow("bilateral:", np.hstack((img, blur)))
+        cv2.waitKey(0)
 
 
 if __name__ == '__main__':
     img = cv2.imread("1.jpg")
     bf = BilateralFilter(img, "output.jpg")
-    print(bf.fit())
+    bf.test(img)
