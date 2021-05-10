@@ -65,7 +65,8 @@ class BilateralFilter:
 
         image_shape = input_image.shape
         assert (image_shape[2] == 1 or image_shape[2] == 3), "图片通道错误..."    # 图片通道必须为1或3
-        
+
+
 
 
 
