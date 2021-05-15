@@ -38,7 +38,6 @@ class KuaiShou():
 
     def get_url_msg(self, ks_url):
         """
-        :param photo_id:
         :param ks_url:
         :return:
         """
